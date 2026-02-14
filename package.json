@@ -1,0 +1,22 @@
+{
+  "name": "richie-cron",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "TZ=UTC bun test"
+  },
+  "dependencies": {
+    "@date-fns/tz": "^1",
+    "@date-fns/utc": "^2",
+    "date-fns": "^4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@date-fns/tz": "^1.4.1",
+    "@date-fns/utc": "^2.1.1",
+    "date-fns": "^4.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
