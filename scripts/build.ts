@@ -3,6 +3,12 @@ import { $, Glob } from 'bun';
 
 const __dirname = import.meta.dirname;
 const packageDir = path.join(__dirname, '..');
+const packageJsonPath = path.join(packageDir, 'package.json');
+
+type PackageJson = Record<string, unknown> & {
+  name: string;
+  version: string;
+};
 
 const createBuildTsconfigs = async () => {
   await Bun.write(
@@ -150,8 +156,7 @@ const buildSrcTree = async (target: 'cjs' | 'mjs'): Promise<boolean> => {
   return allSuccess;
 };
 
-const writeSubPackageJson = async (folder: string, type: 'commonjs' | 'module') => {
-  const packageJson = await Bun.file(path.join(packageDir, 'package.json')).json();
+const writeSubPackageJson = async (packageJson: PackageJson, folder: string, type: 'commonjs' | 'module') => {
   await Bun.write(
     path.join(packageDir, folder, 'package.json'),
     JSON.stringify(
@@ -166,11 +171,30 @@ const writeSubPackageJson = async (folder: string, type: 'commonjs' | 'module') 
   );
 };
 
-const main = async () => {
-  const packageJson = (await Bun.file(path.join(packageDir, 'package.json')).json()) as {
-    name: string;
-    version: string;
+const writePublishPackageJson = async (packageJson: PackageJson) => {
+  const publishPackageJson: PackageJson = { ...packageJson };
+
+  delete publishPackageJson.devDependencies;
+  publishPackageJson.main = './dist/cjs/index.cjs';
+  publishPackageJson.module = './dist/mjs/index.mjs';
+  publishPackageJson.types = './dist/types/index.d.ts';
+  publishPackageJson.exports = {
+    '.': {
+      types: './dist/types/index.d.ts',
+      require: './dist/cjs/index.cjs',
+      import: './dist/mjs/index.mjs',
+    },
   };
+  publishPackageJson.publishConfig = {
+    access: 'public',
+  };
+  publishPackageJson.files = ['dist', 'README.md'];
+
+  await Bun.write(packageJsonPath, JSON.stringify(publishPackageJson, null, 2));
+};
+
+const main = async () => {
+  const packageJson = (await Bun.file(packageJsonPath).json()) as PackageJson;
 
   try {
     console.log('🚀 Building package for npm publishing...');
@@ -194,11 +218,13 @@ const main = async () => {
       throw new Error(`Failed to build ${packageJson.name}`);
     }
 
-    await writeSubPackageJson('dist/cjs', 'commonjs');
-    await writeSubPackageJson('dist/mjs', 'module');
+    await writeSubPackageJson(packageJson, 'dist/cjs', 'commonjs');
+    await writeSubPackageJson(packageJson, 'dist/mjs', 'module');
+    await writePublishPackageJson(packageJson);
 
     console.log('  ✅ CJS bundle created');
     console.log('  ✅ MJS bundle created');
+    console.log('  ✅ package.json updated for publishing');
     console.log(`✨ Finished building ${packageJson.name} v${packageJson.version}`);
   } finally {
     await cleanupBuildTsconfigs();
