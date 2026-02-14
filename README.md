@@ -11,7 +11,7 @@ A cron parsing and iteration library inspired by [`cron-parser`](https://github.
 ## Install
 
 ```bash
-bun install
+bun add richie-cron
 ```
 
 ## Supported Cron Format
