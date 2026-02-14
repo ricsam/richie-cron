@@ -1,9 +1,37 @@
 {
   "name": "richie-cron",
+  "version": "0.1.0",
+  "description": "A cron parsing and iteration library inspired by cron-parser, powered by date-fns.",
   "module": "index.ts",
+  "types": "index.ts",
   "type": "module",
+  "author": "ricsam <oss@ricsam.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ricsam/richie-cron.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ricsam/richie-cron/issues"
+  },
+  "homepage": "https://github.com/ricsam/richie-cron#readme",
+  "keywords": [
+    "cron",
+    "cron-parser",
+    "scheduler",
+    "date-fns",
+    "timezone",
+    "dst",
+    "parser",
+    "typescript"
+  ],
   "scripts": {
-    "test": "TZ=UTC bun test"
+    "test": "TZ=UTC bun test",
+    "typecheck": "bunx --bun tsc -p tsconfig.typecheck.json --noEmit",
+    "build:npm": "bun scripts/build.ts",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "dependencies": {
     "@date-fns/tz": "^1",
@@ -11,10 +39,8 @@
     "date-fns": "^4"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@date-fns/tz": "^1.4.1",
-    "@date-fns/utc": "^2.1.1",
-    "date-fns": "^4.1.0"
+    "@changesets/cli": "latest",
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

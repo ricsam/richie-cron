@@ -254,7 +254,7 @@ export class CronDate {
     const isoWithOffsetPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}(?::?\d{2})?)$/;
 
     if (isoDateOnlyPattern.test(timestamp) || isoNoOffsetPattern.test(timestamp) || isoWithOffsetPattern.test(timestamp)) {
-      const isoDate = parseISO(timestamp, options);
+      const isoDate = parseISO(timestamp, options as Parameters<typeof parseISO>[1]);
       if (this.#isValidDate(isoDate)) {
         if (isoNoOffsetPattern.test(timestamp) && tzName) {
           const [, hour, minute, second] = timestamp.match(/T(\d{2}):(\d{2}):(\d{2})/) ?? [];

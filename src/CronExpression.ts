@@ -31,7 +31,7 @@ const LOOP_LIMIT = 10000;
  * Class representing a Cron expression.
  */
 export class CronExpression {
-  #options: CronExpressionOptions;
+  #options: CronExpressionOptions & { tz: string };
   readonly #tz: string;
   #currentDate: CronDate;
   readonly #startDate: CronDate | null;
