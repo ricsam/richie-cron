@@ -1,5 +1,11 @@
 # richie-cron
 
+## 0.1.1
+
+### Patch Changes
+
+- fix the build script
+
 ## 0.1.0
 
 ### Minor Changes

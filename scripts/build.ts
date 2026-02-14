@@ -3,7 +3,6 @@ import { $, Glob } from 'bun';
 
 const __dirname = import.meta.dirname;
 const packageDir = path.join(__dirname, '..');
-const packageJsonPath = path.join(packageDir, 'package.json');
 
 const createBuildTsconfigs = async () => {
   await Bun.write(
@@ -168,8 +167,10 @@ const writeSubPackageJson = async (folder: string, type: 'commonjs' | 'module') 
 };
 
 const main = async () => {
-  const originalPackageJsonText = await Bun.file(packageJsonPath).text();
-  const packageJson = JSON.parse(originalPackageJsonText) as { name: string; version: string };
+  const packageJson = (await Bun.file(path.join(packageDir, 'package.json')).json()) as {
+    name: string;
+    version: string;
+  };
 
   try {
     console.log('🚀 Building package for npm publishing...');
@@ -201,11 +202,6 @@ const main = async () => {
     console.log(`✨ Finished building ${packageJson.name} v${packageJson.version}`);
   } finally {
     await cleanupBuildTsconfigs();
-    const currentPackageJsonText = await Bun.file(packageJsonPath).text();
-    if (currentPackageJsonText !== originalPackageJsonText) {
-      await Bun.write(packageJsonPath, originalPackageJsonText);
-      console.log('  ✅ package.json restored');
-    }
   }
 };
 
