@@ -1,6 +1,6 @@
 import { CronDate, DateMathOp, TimeUnit } from './CronDate';
 import { CronFieldCollection } from './CronFieldCollection';
-import { CronFieldType, HourRange, MonthRange, SixtyRange } from './fields';
+import type { CronFieldType, HourRange, MonthRange, SixtyRange } from './fields';
 
 export type CronExpressionOptions = {
   currentDate?: Date | string | number | CronDate;

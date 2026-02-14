@@ -1,5 +1,11 @@
 # richie-cron
 
+## 0.1.4
+
+### Patch Changes
+
+- update build script
+
 ## 0.1.3
 
 ### Patch Changes

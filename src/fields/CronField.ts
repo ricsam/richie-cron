@@ -1,4 +1,4 @@
-import { CronChars, CronConstraints, CronFieldType, CronMax, CronMin } from './types';
+import type { CronChars, CronConstraints, CronFieldType, CronMax, CronMin } from './types';
 
 /**
  * Represents the serialized form of a cron field.

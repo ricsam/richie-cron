@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import { $, Glob } from 'bun';
 
 const __dirname = import.meta.dirname;
@@ -8,6 +9,36 @@ const packageJsonPath = path.join(packageDir, 'package.json');
 type PackageJson = Record<string, unknown> & {
   name: string;
   version: string;
+};
+
+const TS_EXTENSION_PATTERN = /\.tsx?$/;
+const ANY_EXTENSION_PATTERN = /\.[^/]+$/;
+
+const resolveRelativeSpecifier = (importerPath: string, rawSpecifier: string, extension: 'cjs' | 'mjs'): string => {
+  if (!rawSpecifier.startsWith('.')) {
+    return rawSpecifier;
+  }
+
+  if (TS_EXTENSION_PATTERN.test(rawSpecifier)) {
+    return rawSpecifier.replace(TS_EXTENSION_PATTERN, `.${extension}`);
+  }
+
+  if (rawSpecifier.endsWith(`.${extension}`) || ANY_EXTENSION_PATTERN.test(rawSpecifier)) {
+    return rawSpecifier;
+  }
+
+  const importerDir = path.dirname(importerPath);
+  const absoluteBase = path.resolve(importerDir, rawSpecifier);
+
+  if (existsSync(`${absoluteBase}.ts`) || existsSync(`${absoluteBase}.tsx`)) {
+    return `${rawSpecifier}.${extension}`;
+  }
+
+  if (existsSync(path.join(absoluteBase, 'index.ts')) || existsSync(path.join(absoluteBase, 'index.tsx'))) {
+    return `${rawSpecifier.replace(/\/$/, '')}/index.${extension}`;
+  }
+
+  return `${rawSpecifier}.${extension}`;
 };
 
 const createBuildTsconfigs = async () => {
@@ -104,14 +135,17 @@ const buildSourceFile = async (src: string, relativeDir: string, target: 'cjs' |
             let content = await Bun.file(args.path).text();
             const extension = target;
 
-            content = content.replace(
-              /((?:im|ex)port\s[\w{}/*\s,]+from\s['"](?:\.\.?\/)+[^'"]+?)(?:\.tsx?)?(?=['"])/gm,
-              `$1.${extension}`,
-            );
+            content = content.replace(/(from\s*['"])(\.{1,2}\/[^'"]+)(['"])/gm, (_match, prefix, specifier, suffix) => {
+              const resolvedSpecifier = resolveRelativeSpecifier(args.path, specifier, extension);
+              return `${prefix}${resolvedSpecifier}${suffix}`;
+            });
 
             content = content.replace(
-              /(import\(['"](?:\.\.?\/)+[^'"]+?)(?:\.tsx?)?(?=['"])/gm,
-              `$1.${extension}`,
+              /(import\(\s*['"])(\.{1,2}\/[^'"]+)(['"]\s*\))/gm,
+              (_match, prefix, specifier, suffix) => {
+                const resolvedSpecifier = resolveRelativeSpecifier(args.path, specifier, extension);
+                return `${prefix}${resolvedSpecifier}${suffix}`;
+              },
             );
 
             return {
@@ -154,6 +188,43 @@ const buildSrcTree = async (target: 'cjs' | 'mjs'): Promise<boolean> => {
   }
 
   return allSuccess;
+};
+
+const rewriteCjsRelativeSpecifiers = async () => {
+  const cjsDir = path.join(packageDir, 'dist', 'cjs');
+  const cjsGlob = new Glob('**/*.cjs');
+
+  for await (const file of cjsGlob.scan({ cwd: cjsDir })) {
+    const filePath = path.join(cjsDir, file);
+    const originalContent = await Bun.file(filePath).text();
+    let content = originalContent;
+
+    content = content.replace(
+      /(require\(\s*['"])(\.{1,2}\/[^'"]+)(['"]\s*\))/gm,
+      (_match, prefix, specifier, suffix) => {
+        if (ANY_EXTENSION_PATTERN.test(specifier)) {
+          return `${prefix}${specifier}${suffix}`;
+        }
+
+        return `${prefix}${specifier}.cjs${suffix}`;
+      },
+    );
+
+    content = content.replace(
+      /(import\(\s*['"])(\.{1,2}\/[^'"]+)(['"]\s*\))/gm,
+      (_match, prefix, specifier, suffix) => {
+        if (ANY_EXTENSION_PATTERN.test(specifier)) {
+          return `${prefix}${specifier}${suffix}`;
+        }
+
+        return `${prefix}${specifier}.cjs${suffix}`;
+      },
+    );
+
+    if (content !== originalContent) {
+      await Bun.write(filePath, content);
+    }
+  }
 };
 
 const writeSubPackageJson = async (packageJson: PackageJson, folder: string, type: 'commonjs' | 'module') => {
@@ -220,6 +291,7 @@ const main = async () => {
 
     await writeSubPackageJson(packageJson, 'dist/cjs', 'commonjs');
     await writeSubPackageJson(packageJson, 'dist/mjs', 'module');
+    await rewriteCjsRelativeSpecifiers();
     await writePublishPackageJson(packageJson);
 
     console.log('  ✅ CJS bundle created');

@@ -6,10 +6,9 @@ import {
   CronMonth,
   CronDayOfWeek,
   CronField,
-  SerializedCronField,
-  CronChars,
 } from './fields';
-import { SixtyRange, HourRange, DayOfMonthRange, MonthRange, DayOfWeekRange } from './fields/types';
+import type { SerializedCronField, CronChars } from './fields';
+import type { SixtyRange, HourRange, DayOfMonthRange, MonthRange, DayOfWeekRange } from './fields/types';
 
 export type FieldRange = {
   start: number | CronChars;

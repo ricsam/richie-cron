@@ -1,6 +1,7 @@
 import { DAYS_IN_MONTH } from '../CronDate';
-import { CronField, CronFieldOptions } from './CronField';
-import { CronChars, CronMax, CronMin, MonthRange } from './types';
+import { CronField } from './CronField';
+import type { CronFieldOptions } from './CronField';
+import type { CronChars, CronMax, CronMin, MonthRange } from './types';
 
 const MIN_MONTH = 1;
 const MAX_MONTH = 12;
